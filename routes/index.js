@@ -2,7 +2,10 @@
 module.exports = {
   login: require("../authentication/Login.Route"),
   register: require("../authentication/Register.Route"),
-  // forgetPassword: require("../authentication/forgetPassword.Route"),
-  
+  //forgetPassword: require("../authentication/forgetPassword.Route"),
+  product: require("../routes/product.routes"),
+  category: require("../routes/category.routes"),
+  brand: require("../routes/brand.routes"),
+
 
 };
