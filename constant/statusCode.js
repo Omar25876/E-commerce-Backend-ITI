@@ -1,3 +1,4 @@
+
 module.exports = {
   // 2xx Success
   ok: 200,
@@ -26,4 +27,6 @@ module.exports = {
   badGateway: 502,
   serviceUnavailable: 503,
   gatewayTimeout: 504,
-};
+
+
+ };

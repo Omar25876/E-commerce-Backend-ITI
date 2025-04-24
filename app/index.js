@@ -6,14 +6,15 @@ const statusCode = require("../constant/statusCode");
 
 app.use(cors());
 
-
 app.use(express.json());
 app.use("/api/register", routers.register);
 app.use("/api/login", routers.login);
-// app.use("/api/forgetPassword", routers.forgetPassword);
+//app.use("/api/forgetPassword", routers.forgetPassword);
 // app.use("/api/resetPasswordWithPhone", routers.forgetPassword);
 // app.use("/api/resetPasswordWithEmail", routers.forgetPassword);
-
+app.use("/api/products", routers.product);
+app.use("/api/category", routers.category);
+app.use("/api/brand", routers.brand);
 
 app.use((err, req, res, next) => {
   return res.status(err.statusCode || statusCode.internalServerError).json({ error: err.message });
