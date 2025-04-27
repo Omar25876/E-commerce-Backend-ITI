@@ -1,5 +1,8 @@
 const Product = require('../models/productModel');
 const StatusCode = require('../constant/statusCode');
+const upload = require('../middlewares/multerConfig'); 
+
+// Get all products
 exports.getAllProducts = async (req, res) => {
   try {
     const { page = 1, limit = 10, sort, category, minPrice, maxPrice, type } = req.query;
@@ -31,6 +34,7 @@ exports.getAllProducts = async (req, res) => {
   }
 };
 
+// Get product by ID
 exports.getProductById = async (req, res) => {
   try {
     const product = await Product.findById(req.params.id);
@@ -41,9 +45,17 @@ exports.getProductById = async (req, res) => {
   }
 };
 
+// Create a product
 exports.createProduct = async (req, res) => {
   try {
-    const product = new Product(req.body);
+    const productData = req.body;
+    
+    if (req.files && req.files.length > 0) {
+      const imagePaths = req.files.map(file => `/uploads/products/${file.filename}`);
+      productData.images = imagePaths;
+    }
+
+    const product = new Product(productData);
     await product.save();
     res.status(StatusCode.created).json(product);
   } catch (err) {
@@ -51,6 +63,7 @@ exports.createProduct = async (req, res) => {
   }
 };
 
+// Update a product
 exports.updateProduct = async (req, res) => {
   try {
     const updatedProduct = await Product.findByIdAndUpdate(req.params.id, req.body, { new: true });
@@ -60,6 +73,7 @@ exports.updateProduct = async (req, res) => {
   }
 };
 
+// Delete a product
 exports.deleteProduct = async (req, res) => {
   try {
     await Product.findByIdAndDelete(req.params.id);
