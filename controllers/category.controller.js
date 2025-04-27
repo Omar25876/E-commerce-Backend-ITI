@@ -21,9 +21,18 @@ exports.getCategoryById = async (req, res) => {
   }
 };
 
+
 exports.createCategory = async (req, res) => {
   try {
-    const category = new Category(req.body);
+    const { name, description } = req.body;
+    const categoryData = { name, description };
+
+    // Check if an image is uploaded
+    if (req.file) {
+      categoryData.image = req.file.path; // Add the image path to the category data
+    }
+
+    const category = new Category(categoryData);
     await category.save();
     res.status(201).json(category);
   } catch (err) {
@@ -31,9 +40,18 @@ exports.createCategory = async (req, res) => {
   }
 };
 
+
 exports.updateCategory = async (req, res) => {
   try {
-    const category = await Category.findByIdAndUpdate(req.params.id, req.body, { new: true });
+    const { name, description } = req.body;
+    const categoryData = { name, description };
+
+    // Check if an image is uploaded
+    if (req.file) {
+      categoryData.image = req.file.path; // Add the new image path
+    }
+
+    const category = await Category.findByIdAndUpdate(req.params.id, categoryData, { new: true });
     res.json(category);
   } catch (err) {
     res.status(400).json({ error: err.message });

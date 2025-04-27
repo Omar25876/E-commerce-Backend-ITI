@@ -15,6 +15,7 @@ app.use("/api/login", routers.login);
 app.use("/api/products", routers.product);
 app.use("/api/category", routers.category);
 app.use("/api/brand", routers.brand);
+app.use("/api/profile", routers.account);
 
 app.use((err, req, res, next) => {
   return res.status(err.statusCode || statusCode.internalServerError).json({ error: err.message });

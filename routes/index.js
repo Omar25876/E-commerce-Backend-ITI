@@ -6,6 +6,7 @@ module.exports = {
   product: require("../routes/product.routes"),
   category: require("../routes/category.routes"),
   brand: require("../routes/brand.routes"),
+  account: require("../routes/account.routes"),
 
 
 };
