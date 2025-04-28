@@ -3,7 +3,7 @@ const cors = require("cors");
 const app = express();
 const routers = require("../routes");
 const statusCode = require("../constant/statusCode");
-
+// Omar
 app.use(express.json());
 app.use("/api/register", routers.register);
 app.use("/api/login", routers.login);

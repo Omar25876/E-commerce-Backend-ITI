@@ -1,6 +1,11 @@
 const Product = require('../models/productModel');
 const StatusCode = require('../constant/statusCode');
-const upload = require('../middlewares/multerConfig'); 
+const { uploadImageToGitHub } = require('../github'); 
+const multer = require('multer');
+
+// Setup multer for in-memory storage
+const upload = multer({ storage: multer.memoryStorage() }).single('image'); // 'image' is the key name
+
 
 // Get all products
 exports.getAllProducts = async (req, res) => {
@@ -45,32 +50,154 @@ exports.getProductById = async (req, res) => {
   }
 };
 
+
+
 // Create a product
 exports.createProduct = async (req, res) => {
-  try {
-    const productData = req.body;
-    
-    if (req.files && req.files.length > 0) {
-      const imagePaths = req.files.map(file => `/uploads/products/${file.filename}`);
-      productData.images = imagePaths;
+  upload(req, res, async (err) => {
+    if (err) {
+      return res.status(StatusCode.badRequest).json({ error: 'Error uploading file' });
     }
 
-    const product = new Product(productData);
-    await product.save();
-    res.status(StatusCode.created).json(product);
-  } catch (err) {
-    res.status(StatusCode.badRequest).json({ error: err.message });
-  }
+    try {
+      const {
+        name,
+        description,
+        price,
+        oldPrice,
+        discount,
+        colors,
+        selectedColor,
+        stock,
+        rating,
+        reviewsCount,
+        images,
+        highlights,
+        specs,
+        modelNumber,
+        modelName,
+        whatsInTheBox,
+        isPopular,
+        isNewArrival,
+        isDiscover,
+        category
+      } = req.body;
+      
+      const productData = {
+        name,
+        description,
+        price,
+        oldPrice,
+        discount,
+        colors,
+        selectedColor,
+        stock,
+        rating,
+        reviewsCount,
+        images,
+        highlights,
+        specs,
+        modelNumber,
+        modelName,
+        whatsInTheBox,
+        isPopular,
+        isNewArrival,
+        isDiscover,
+        category
+      };
+      
+      const fileName = req.query.fileName || "1"; // Default 1 for products
+      if (!["1", "2", "3", "4"].includes(fileName)) {
+        return res.status(StatusCode.badRequest).json({ error: 'Invalid fileName parameter' });
+      }
+
+      if (req.file) {
+        const uploadedFileUrl = await uploadImageToGitHub(req.file, fileName);
+        productData.images = [uploadedFileUrl]; // Set single image inside array
+      } else {
+        return res.status(StatusCode.badRequest).json({ error: 'No file uploaded' });
+      }
+
+      const product = new Product(productData);
+      await product.save();
+      res.status(StatusCode.created).json(product);
+    } catch (err) {
+      res.status(StatusCode.badRequest).json({ error: err.message });
+    }
+  });
 };
 
 // Update a product
 exports.updateProduct = async (req, res) => {
-  try {
-    const updatedProduct = await Product.findByIdAndUpdate(req.params.id, req.body, { new: true });
-    res.json(updatedProduct);
-  } catch (err) {
-    res.status(StatusCode.badRequest).json({ error: err.message });
-  }
+  upload(req, res, async (err) => {
+    if (err) {
+      return res.status(StatusCode.badRequest).json({ error: 'Error uploading file' });
+    }
+
+    try {
+      const {
+        name,
+        description,
+        price,
+        oldPrice,
+        discount,
+        colors,
+        selectedColor,
+        stock,
+        rating,
+        reviewsCount,
+        images,
+        highlights,
+        specs,
+        modelNumber,
+        modelName,
+        whatsInTheBox,
+        isPopular,
+        isNewArrival,
+        isDiscover,
+        category
+      } = req.body;
+      
+      const updatedProductData = {
+        name,
+        description,
+        price,
+        oldPrice,
+        discount,
+        colors,
+        selectedColor,
+        stock,
+        rating,
+        reviewsCount,
+        images,
+        highlights,
+        specs,
+        modelNumber,
+        modelName,
+        whatsInTheBox,
+        isPopular,
+        isNewArrival,
+        isDiscover,
+        category
+      };
+      
+     
+    
+      if (req.file) {
+        const fileName = req.query.fileName || "1"; // Default 1 for products
+        if (!["1", "2", "3", "4"].includes(fileName)) {
+          return res.status(StatusCode.badRequest).json({ error: 'Invalid fileName parameter' });
+        }
+        const uploadedFileUrl = await uploadImageToGitHub(req.file, fileName);
+        updatedProductData.images = [uploadedFileUrl]; // Replace images
+      }
+
+      const updatedProduct = await Product.findByIdAndUpdate(req.params.id, updatedProductData, { new: true });
+      res.json(updatedProduct);
+    } catch (err) {
+      res.status(StatusCode.badRequest).json({ error: err.message });
+    }
+  });
 };
 
 // Delete a product
@@ -82,3 +209,4 @@ exports.deleteProduct = async (req, res) => {
     res.status(StatusCode.internalServerError).json({ error: err.message });
   }
 };
+
