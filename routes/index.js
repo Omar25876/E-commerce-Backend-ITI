@@ -9,6 +9,6 @@ module.exports = {
   account: require("../routes/account.routes"),
 
   // forgetPassword: require("../authentication/forgetPassword.Route"),
-  paymentRoute : require("../services/paymentRoute")
-
+  payment: require("../routes/payment.routes"),
+  order: require("../routes/order.routes"),
 };
