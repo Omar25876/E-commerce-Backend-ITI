@@ -3,8 +3,16 @@ const cors = require("cors");
 const app = express();
 const routers = require("../routes");
 const statusCode = require("../constant/statusCode");
+const bodyParser = require("body-parser");
+const multer = require("multer");
+// Set up multer storage options (in-memory storage in this case)
+const storage = multer.memoryStorage();
+const upload = multer({ storage: storage });
 
 app.use(cors());
+app.use(bodyParser.urlencoded({ extended: true }));
+app.use(bodyParser.json());
+ 
 
 app.use(express.json());
 app.use("/api/register", routers.register);
