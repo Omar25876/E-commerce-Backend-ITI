@@ -1,9 +1,15 @@
 const mongoose = require("mongoose");
-// const Payment = require("./paymentModel"); 
-// const User = require("./userModel"); 
+const Payment = require("./paymentModel");
+const Address = require("./addressModel");
+const UserId = require("./userModel");
 
 const orderSchema = new mongoose.Schema(
   {
+    userId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: UserId.modelName,
+      required: [true, "UserId is required"],
+    },
     orderId: {
       type: Number,
       required: true,
@@ -21,14 +27,25 @@ const orderSchema = new mongoose.Schema(
     },
     payment: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: "Payment",
+      ref: Payment.modelName, 
       required: true,
     },
     shippingAddress: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: "User",
+      ref: Address.modelName,
       required: true,
     },
+    paymentMethod: {
+      type: String,
+      enum: ["stripe", "cash"],
+      required: true,
+    },
+    status: {
+      type: String,
+      enum: ["pending", "processing", "shipped", "delivered"],
+      default: "pending",
+    },
+
   },
   { timestamps: true }
 );

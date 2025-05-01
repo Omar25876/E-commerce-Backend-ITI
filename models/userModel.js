@@ -1,5 +1,6 @@
 const mongoose = require("mongoose");
 const bcrypt = require("bcryptjs");
+const Address = require("./addressModel");
 
 const userSchema = new mongoose.Schema(
   {
@@ -44,10 +45,9 @@ const userSchema = new mongoose.Schema(
       minLength: [8, "Password should be at least 8 characters"],
     },
     address: {
-      city: { type: String, required: false, default: "" },
-      street: { type: String, required: false, default: "" },
-      buildingNumber: { type: String, required: false, default: "" },
-      apartmentNumber: { type: String, required: false, default: "" },
+      type: mongoose.Schema.Types.ObjectId,
+      ref: Address.modelName,
+      required: true,
     },
     gender: {
       type: String,
