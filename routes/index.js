@@ -11,4 +11,6 @@ module.exports = {
   // forgetPassword: require("../authentication/forgetPassword.Route"),
   payment: require("../routes/payment.routes"),
   order: require("../routes/order.routes"),
+
+  uploadImage: require("../routes/uploadImage.routes"),
 };
