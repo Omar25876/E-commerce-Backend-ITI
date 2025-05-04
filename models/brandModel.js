@@ -1,9 +1,10 @@
 const mongoose = require('mongoose');
 
 const brandSchema = new mongoose.Schema({
-  name: String,
-  description: String,
-  image: String, // image URL or path
+  name: {
+    type: String,
+    required: true,
+  },
 });
 
 module.exports = mongoose.model('Brand', brandSchema);

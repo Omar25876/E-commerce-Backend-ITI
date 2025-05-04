@@ -46,6 +46,7 @@ const LogIn = async (req, res) => {
       message: "Logged in successfully.",
       token: dataJWT,
       user: {
+        _id: foundUser._id,
         profileImageUrl: foundUser.profileImageUrl,
         firstName: foundUser.firstName,
         lastName: foundUser.lastName,

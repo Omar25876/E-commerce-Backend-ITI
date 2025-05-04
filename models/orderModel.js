@@ -30,11 +30,7 @@ const orderSchema = new mongoose.Schema(
       ref: Payment.modelName, 
       required: true,
     },
-    shippingAddress: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: Address.modelName,
-      required: true,
-    },
+    shippingAddress:Address,
     paymentMethod: {
       type: String,
       enum: ["stripe", "cash"],

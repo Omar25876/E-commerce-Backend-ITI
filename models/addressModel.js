@@ -9,6 +9,8 @@ const addressSchema = new mongoose.Schema({
       entrance: { type: String, required: false, default: "" },
       zipCode: { type: String, required: false, default: "" },
       country: { type: String, required: false, default: "" },
-});
+},
+{ _id: false } 
+);
 
-module.exports = mongoose.model('Address', addressSchema);
+module.exports = addressSchema;
