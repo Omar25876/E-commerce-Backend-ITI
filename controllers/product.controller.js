@@ -47,8 +47,7 @@ exports.getAllProducts = async (req, res) => {
     const products = await Product.find(filter)
       .sort(sortOption)
       .skip((page - 1) * limit)
-      .limit(Number(limit))
-      .populate('brand category');
+      .limit(Number(limit));
 
     const total = await Product.countDocuments(filter);
 
