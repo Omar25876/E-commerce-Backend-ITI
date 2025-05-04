@@ -42,16 +42,18 @@ const productSchema = new mongoose.Schema({
   isPopular: Boolean,
   isNewArrival: Boolean,
   isDiscover: Boolean,
-  category: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: Category.modelName,
-    required: true
-  },
-  brand: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: Brand.modelName,
-    required: true
-  }
+  // category: {
+  //   type: mongoose.Schema.Types.ObjectId,
+  //   ref: Category.modelName,
+  //   required: true
+  // },
+  // brand: {
+  //   type: mongoose.Schema.Types.ObjectId,
+  //   ref: Brand.modelName,
+  //   required: true
+  // }
+    category:String,
+  brand:String,
 }, { timestamps: true });
 
 module.exports = mongoose.model('Product', productSchema);
