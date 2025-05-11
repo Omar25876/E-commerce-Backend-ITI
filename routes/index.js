@@ -13,4 +13,6 @@ module.exports = {
   order: require("../routes/order.routes"),
 
   uploadImage: require("../routes/uploadImage.routes"),
+
+  cart: require("../routes/cart.routes"),
 };
