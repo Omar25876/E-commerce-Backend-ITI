@@ -18,7 +18,6 @@ exports.getAllOrders = async (req, res) => {
 // Get single order by ID
 exports.getOrderById = async (req, res) => {
   const orderId = req.params.Id;
-
   try {
     const order = await Order.findById(orderId).populate("userId payment");
 
@@ -32,6 +31,27 @@ exports.getOrderById = async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 };
+
+// Get all orders for a specific user
+exports.getOrdersForSpecificUser = async (req, res) => {
+  const { userId } = req.params;
+
+  try {
+    const userOrders = await Order.find({ userId })
+      .populate("userId payment")
+      .sort({ createdAt: -1 }); // Optional: Sort by latest orders
+
+    if (!userOrders || userOrders.length === 0) {
+      return res.status(404).json({ message: "No orders found for this user" });
+    }
+
+    res.status(200).json({ orders: userOrders });
+  } catch (error) {
+    console.error("Error fetching user's orders:", error);
+    res.status(500).json({ error: error.message });
+  }
+};
+
 
 // Create a new order
 exports.createOrder = async (req, res) => {
