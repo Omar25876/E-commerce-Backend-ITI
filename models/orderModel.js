@@ -49,9 +49,14 @@ const orderSchema = new mongoose.Schema(
     payment: {
       type: mongoose.Schema.Types.ObjectId,
       ref: Payment.modelName,
-      required: true,
+      required: false,
     },
     shippingAddress: Address,
+    paymentMethod: {
+      type: String,
+      enum: ["stripe", "cash"],
+      required: true,
+    },
   },
   { timestamps: true }
 );
