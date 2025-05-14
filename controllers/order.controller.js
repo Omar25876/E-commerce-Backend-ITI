@@ -1,5 +1,5 @@
 const Order = require("../models/orderModel");
-
+const Product = require("../models/productModel")
 function calculateTotalAmount(items) {
   return items.reduce((total, item) => total + item.quantity * item.price, 0);
 }
@@ -45,6 +45,7 @@ exports.createOrder = async (req, res) => {
       DeliveyType,
       Status,
       userId,
+      paymentMethod,
     } = req.body;
 
     // Get the last orderId from the DB and increment it by 1
@@ -53,10 +54,10 @@ exports.createOrder = async (req, res) => {
 
     // Check stock and update product stock
     for (const item of items) {
-      const product = await Product.findById(item.Id);
+      const product = await Product.findById(item._id);
 
       if (!product) {
-        return res.status(404).json({ error: `Product with ID ${item.Id} not found` });
+        return res.status(404).json({ error: `Product with ID ${item._id} not found` });
       }
 
       if (product.stock < item.quantity) {
@@ -83,6 +84,7 @@ exports.createOrder = async (req, res) => {
       PromoCode,
       DeliveyType,
       Status,
+      paymentMethod
     });
 
     res.status(201).json({ message: "Order created successfully", newOrder });
