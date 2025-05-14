@@ -29,7 +29,7 @@ app.use("/api/category", routers.category);
 app.use("/api/brand", routers.brand);
 app.use("/api/profile", routers.account);
 app.use("/api/payment", routers.payment);
-app.use("/api/order", routers.order);
+app.use("/api/orders", routers.order);
 app.use("/api/cart", routers.cart);
 
 app.use((err, req, res, next) => {
