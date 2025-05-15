@@ -53,6 +53,9 @@ const userSchema = new mongoose.Schema(
       type: Boolean,
       default: false,
     },
+    resetCode: { type: String },
+    resetCodeExpires: { type: Date },
+
     paymentCards: [
       {
         cardNumber: { type: String, required: false, default: "" },
