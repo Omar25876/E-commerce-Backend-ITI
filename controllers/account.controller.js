@@ -14,7 +14,6 @@ const getProfile = async (req, res) => {
         message: "User not found.",
       });
     }
-
     const formattedProfile = {
       profileImageUrl: user.profileImageUrl,
       firstName: user.firstName,
@@ -27,11 +26,13 @@ const getProfile = async (req, res) => {
       createdAt: moment(user.createdAt).format("YYYY-MM-DD hh:mm A"),
       updatedAt: moment(user.updatedAt).format("YYYY-MM-DD hh:mm A"),
       paymentCards: user.paymentCards.map(card => ({
+        
         id:card._id,
         cardHolderName: card.cardHolderName,
         cardNumber: card.cardNumber,
-        expiryDate: moment(card.expiryDate).format("MM/YYYY"),
-        cvv: card.cvv
+        cvv: card.cvv,
+        expiryDate : card.expiryDate,
+        
       })),
     };
 
@@ -61,7 +62,7 @@ const updateProfile = async (req, res) => {
         message: "User not found.",
       });
     }
-
+ 
     const formattedProfile = {
       profileImageUrl: updatedUser.profileImageUrl,
       firstName: updatedUser.firstName,
@@ -76,8 +77,9 @@ const updateProfile = async (req, res) => {
       paymentCards: updatedUser.paymentCards.map(card => ({
         cardNumber: card.cardNumber,
         cardHolderName: card.cardHolderName,
-        expiryDate: moment(card.expiryDate).format("MM/YYYY"),
-        cvv:card.cvv
+         cvv:card.cvv,
+         expiryDate : card.expiryDate,
+       
       })),
     };
 
