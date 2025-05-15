@@ -27,6 +27,7 @@ const getProfile = async (req, res) => {
       createdAt: moment(user.createdAt).format("YYYY-MM-DD hh:mm A"),
       updatedAt: moment(user.updatedAt).format("YYYY-MM-DD hh:mm A"),
       paymentCards: user.paymentCards.map(card => ({
+        id:card._id,
         cardHolderName: card.cardHolderName,
         cardNumber: card.cardNumber,
         expiryDate: moment(card.expiryDate).format("MM/YYYY"),
