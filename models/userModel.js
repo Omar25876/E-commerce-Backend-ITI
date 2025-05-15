@@ -58,6 +58,7 @@ const userSchema = new mongoose.Schema(
         cardNumber: { type: String, required: false, default: "" },
         cardHolderName: { type: String, required: false, default: "" },
         expiryDate: { type: String, required: false, default: "" },
+        cvv:{ type: String, required: false, default: "",min:3,max:4 },
       },
     ],
   },
