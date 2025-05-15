@@ -31,6 +31,7 @@ app.use("/api/profile", routers.account);
 app.use("/api/payment", routers.payment);
 app.use("/api/orders", routers.order);
 app.use("/api/cart", routers.cart);
+app.use('/api/promocode', routers.promocode);
 
 app.use((err, req, res, next) => {
   return res

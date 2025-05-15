@@ -15,4 +15,8 @@ module.exports = {
   uploadImage: require("../routes/uploadImage.routes"),
 
   cart: require("../routes/cart.routes"),
+  promocode:require('./promocode.routes')
+ 
+
+
 };
