@@ -6,7 +6,7 @@ const statusCode = require("../constant/statusCode");
 const bodyParser = require("body-parser");
 const { connectRedis } = require("../services/redisClient");
 
-// here to ensure we connected to redis before server
+
 (async () => {
   try {
     await connectRedis();
@@ -20,17 +20,18 @@ app.use(bodyParser.urlencoded({ extended: true }));
 app.use(express.json());
 app.use("/api/register", routers.register);
 app.use("/api/login", routers.login);
+app.use("/api/auth/google",routers.googleLogin);
 app.use("/api/upload", routers.uploadImage);
-//app.use("/api/forgetPassword", routers.forgetPassword);
-// app.use("/api/resetPasswordWithPhone", routers.forgetPassword);
-// app.use("/api/resetPasswordWithEmail", routers.forgetPassword);
 app.use("/api/products", routers.product);
 app.use("/api/category", routers.category);
 app.use("/api/brand", routers.brand);
 app.use("/api/profile", routers.account);
 app.use("/api/payment", routers.payment);
-app.use("/api/order", routers.order);
+app.use("/api/orders", routers.order);
 app.use("/api/cart", routers.cart);
+app.use('/api/promocode', routers.promocode);
+app.use('/api/resetPassword', routers.resetPassword);
+app.use('/api/forgetPassword', routers.forgotPassword);
 
 app.use((err, req, res, next) => {
   return res

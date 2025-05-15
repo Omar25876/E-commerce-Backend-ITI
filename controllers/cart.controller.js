@@ -6,8 +6,16 @@ const {
 
 exports.addItem = async (req, res) => {
   const { userId } = req.params;
-  const { itemId, quantity, price } = req.body;
-  await addItemToCart(userId, itemId, { quantity, price });
+  const { itemId, quantity, price, name, selectedColor, image, brandId } =
+    req.body;
+  await addItemToCart(userId, itemId, {
+    quantity,
+    price,
+    name,
+    selectedColor,
+    image,
+    brandId,
+  });
   res.json({ success: true });
 };
 

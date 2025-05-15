@@ -5,5 +5,3 @@ router.post("/", login);
 
 module.exports = router;
 
-
-// Compare this snippet from authentication/Login.Controller.js:
