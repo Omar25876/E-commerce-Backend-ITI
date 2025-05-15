@@ -31,6 +31,7 @@ const getProfile = async (req, res) => {
         cardHolderName: card.cardHolderName,
         cardNumber: card.cardNumber,
         expiryDate: moment(card.expiryDate).format("MM/YYYY"),
+        cvv: card.cvv
       })),
     };
 
@@ -76,6 +77,7 @@ const updateProfile = async (req, res) => {
         cardNumber: card.cardNumber,
         cardHolderName: card.cardHolderName,
         expiryDate: moment(card.expiryDate).format("MM/YYYY"),
+        cvv:card.cvv
       })),
     };
 
