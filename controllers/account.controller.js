@@ -2,18 +2,18 @@ const userModel = require("../models/userModel");
 const bcrypt = require("bcryptjs");
 const moment = require("moment");
 const statusCode = require("../constant/statusCode");
+const { uploadImageToGitHub } = require("../github");
 
-// Get Profile Data
+// GET Profile Data
 const getProfile = async (req, res) => {
   try {
-    const userId = req.user.id; // assuming JWT is decoded and stored in req.user
+    const userId = req.user.id;
     const user = await userModel.findById(userId).select("-password");
 
     if (!user) {
-      return res.status(statusCode.notFound).json({
-        message: "User not found.",
-      });
+      return res.status(statusCode.notFound).json({ message: "User not found." });
     }
+
     const formattedProfile = {
       profileImageUrl: user.profileImageUrl,
       firstName: user.firstName,
@@ -26,43 +26,95 @@ const getProfile = async (req, res) => {
       createdAt: moment(user.createdAt).format("YYYY-MM-DD hh:mm A"),
       updatedAt: moment(user.updatedAt).format("YYYY-MM-DD hh:mm A"),
       paymentCards: user.paymentCards.map(card => ({
-        
-        id:card._id,
+        id: card._id,
         cardHolderName: card.cardHolderName,
         cardNumber: card.cardNumber,
         cvv: card.cvv,
-        expiryDate : card.expiryDate,
-        
+        expiryDate: card.expiryDate,
       })),
     };
 
-    return res.status(statusCode.ok).json({
-      user: formattedProfile,
-    });
+    return res.status(statusCode.ok).json({ user: formattedProfile });
   } catch (error) {
     console.error(error);
-    return res.status(statusCode.internalServerError).json({
-      error: error.message,
-    });
+    return res.status(statusCode.internalServerError).json({ error: error.message });
   }
 };
 
-// Update Profile Data
+// UPDATE Profile Data
+// UPDATE Profile Data
 const updateProfile = async (req, res) => {
   try {
-    const userId = req.user.id; // assuming JWT is decoded and stored in req.user
-    const { firstName, lastName, email, phone, address, gender, profileImageUrl, paymentCards } = req.body;
+    const userId = req.user.id;
+    const {
+      firstName,
+      lastName,
+      email,
+      phone,
+      address,
+      gender,
+      paymentCards, // Expecting an array or JSON string
+    } = req.body;
 
-    const updatedData = { firstName, lastName, email, phone, address, gender, profileImageUrl, paymentCards };
-
-    const updatedUser = await userModel.findByIdAndUpdate(userId, updatedData, { new: true }).select("-password");
-
-    if (!updatedUser) {
-      return res.status(statusCode.notFound).json({
-        message: "User not found.",
-      });
+    // Upload image to GitHub if provided
+    let profileImageUrl;
+    if (req.file) {
+      const folderPath = `profile_images/${userId}`;
+      profileImageUrl = await uploadImageToGitHub(req.file, folderPath);
     }
- 
+
+    // Get the existing user
+    const user = await userModel.findById(userId);
+    if (!user) {
+      return res.status(statusCode.notFound).json({ message: "User not found." });
+    }
+
+    // Parse incoming cards
+    const incomingCards = Array.isArray(paymentCards)
+      ? paymentCards
+      : JSON.parse(paymentCards || "[]");
+
+    const updatedCardMap = new Map();
+
+    // 1. Add existing cards to map by id
+    user.paymentCards.forEach((card) => {
+      updatedCardMap.set(String(card._id), card.toObject());
+    });
+
+    // 2. Handle incoming cards
+    const newCardsToAdd = [];
+
+    incomingCards.forEach((card) => {
+      if (card.id && updatedCardMap.has(card.id)) {
+        // Update existing card
+        const existing = updatedCardMap.get(card.id);
+        updatedCardMap.set(card.id, { ...existing, ...card });
+      } else {
+        // New card to add on top
+        newCardsToAdd.push(card);
+      }
+    });
+
+    // Final merged list: new cards first, then updated existing
+    const mergedCards = [...newCardsToAdd, ...Array.from(updatedCardMap.values())];
+
+    // Prepare updated fields
+    const updatedData = {
+      ...(firstName !== undefined && { firstName }),
+      ...(lastName !== undefined && { lastName }),
+      ...(email !== undefined && { email }),
+      ...(phone !== undefined && { phone }),
+      ...(address !== undefined && { address }),
+      ...(gender !== undefined && { gender }),
+      ...(profileImageUrl && { profileImageUrl }),
+      ...(paymentCards !== undefined && { paymentCards: mergedCards }),
+    };
+
+    // Update the user
+    const updatedUser = await userModel
+      .findByIdAndUpdate(userId, updatedData, { new: true })
+      .select("-password");
+
     const formattedProfile = {
       profileImageUrl: updatedUser.profileImageUrl,
       firstName: updatedUser.firstName,
@@ -74,12 +126,12 @@ const updateProfile = async (req, res) => {
       isAdmin: updatedUser.isAdmin,
       createdAt: moment(updatedUser.createdAt).format("YYYY-MM-DD hh:mm A"),
       updatedAt: moment(updatedUser.updatedAt).format("YYYY-MM-DD hh:mm A"),
-      paymentCards: updatedUser.paymentCards.map(card => ({
-        cardNumber: card.cardNumber,
+      paymentCards: updatedUser.paymentCards.map((card) => ({
+        id: card._id,
         cardHolderName: card.cardHolderName,
-         cvv:card.cvv,
-         expiryDate : card.expiryDate,
-       
+        cardNumber: card.cardNumber,
+        cvv: card.cvv,
+        expiryDate: card.expiryDate,
       })),
     };
 
@@ -89,33 +141,26 @@ const updateProfile = async (req, res) => {
     });
   } catch (error) {
     console.error(error);
-    return res.status(statusCode.internalServerError).json({
-      error: error.message,
-    });
+    return res.status(statusCode.internalServerError).json({ error: error.message });
   }
 };
 
-// Delete Account
+
+
+// DELETE Account
 const deleteAccount = async (req, res) => {
   try {
-    const userId = req.user.id; // assuming JWT is decoded and stored in req.user
-
+    const userId = req.user.id;
     const deletedUser = await userModel.findByIdAndDelete(userId);
 
     if (!deletedUser) {
-      return res.status(statusCode.notFound).json({
-        message: "User not found, unable to delete account.",
-      });
+      return res.status(statusCode.notFound).json({ message: "User not found, unable to delete account." });
     }
 
-    return res.status(statusCode.ok).json({
-      message: "Account deleted successfully.",
-    });
+    return res.status(statusCode.ok).json({ message: "Account deleted successfully." });
   } catch (error) {
     console.error(error);
-    return res.status(statusCode.internalServerError).json({
-      error: error.message,
-    });
+    return res.status(statusCode.internalServerError).json({ error: error.message });
   }
 };
 
