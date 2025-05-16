@@ -42,7 +42,6 @@ const getProfile = async (req, res) => {
 };
 
 // UPDATE Profile Data
-// UPDATE Profile Data
 const updateProfile = async (req, res) => {
   try {
     const userId = req.user.id;
@@ -164,8 +163,68 @@ const deleteAccount = async (req, res) => {
   }
 };
 
+ 
+// const deletePaymentCard = async (req, res) => {
+//   try {
+//     const userId = req.user.id;
+//     const cardId = req.params.cardId;
+
+//     const user = await userModel.findById(userId);
+//     if (!user) {
+//       return res.status(statusCode.notFound).json({ message: "User not found." });
+//     }
+
+//     const initialLength = user.paymentCards.length;
+//     user.paymentCards = user.paymentCards.filter(
+//       (card) => String(card._id) !== String(cardId)
+//     );
+
+//     if (user.paymentCards.length === initialLength) {
+//       return res.status(statusCode.notFound).json({ message: "Card not found." });
+//     }
+
+//     await user.save();
+
+//     return res.status(statusCode.ok).json({ message: "Payment card deleted successfully." });
+//   } catch (error) {
+//     console.error(error);
+//     return res.status(statusCode.internalServerError).json({ error: error.message });
+//   }
+// };
+
+const deletePaymentCard = async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const cardId = req.params.cardId;
+
+    const user = await userModel.findById(userId);
+    if (!user) {
+      return res.status(statusCode.notFound).json({ message: "User not found." });
+    }
+
+    const initialLength = user.paymentCards.length;
+    user.paymentCards = user.paymentCards.filter(
+      (card) => String(card._id) !== String(cardId)
+    );
+
+    if (user.paymentCards.length === initialLength) {
+      return res.status(statusCode.notFound).json({ message: "Card not found." });
+    }
+
+    // Save without validating other fields
+    await user.save({ validateBeforeSave: false });
+
+    return res.status(statusCode.ok).json({ message: "Payment card deleted successfully." });
+  } catch (error) {
+    console.error(error);
+    return res.status(statusCode.internalServerError).json({ error: error.message });
+  }
+};
+
+
 module.exports = {
   getProfile,
   updateProfile,
   deleteAccount,
+  deletePaymentCard
 };
