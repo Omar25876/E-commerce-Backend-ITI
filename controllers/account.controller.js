@@ -42,10 +42,10 @@ const getProfile = async (req, res) => {
 };
 
 // UPDATE Profile Data
+// UPDATE Profile Data
 const updateProfile = async (req, res) => {
   try {
     const userId = req.user.id;
-
     const {
       firstName,
       lastName,
@@ -53,7 +53,7 @@ const updateProfile = async (req, res) => {
       phone,
       address,
       gender,
-      paymentCards,  
+      paymentCards, // Expecting an array or JSON string
     } = req.body;
 
     // Upload image to GitHub if provided
@@ -69,25 +69,48 @@ const updateProfile = async (req, res) => {
       return res.status(statusCode.notFound).json({ message: "User not found." });
     }
 
-    // Merge payment cards (new ones added to existing)
-    const parsedCards = Array.isArray(paymentCards)
+    // Parse incoming cards
+    const incomingCards = Array.isArray(paymentCards)
       ? paymentCards
       : JSON.parse(paymentCards || "[]");
 
-    const updatedCards = [...user.paymentCards, ...parsedCards];
+    const updatedCardMap = new Map();
+
+    // 1. Add existing cards to map by id
+    user.paymentCards.forEach((card) => {
+      updatedCardMap.set(String(card._id), card.toObject());
+    });
+
+    // 2. Handle incoming cards
+    const newCardsToAdd = [];
+
+    incomingCards.forEach((card) => {
+      if (card.id && updatedCardMap.has(card.id)) {
+        // Update existing card
+        const existing = updatedCardMap.get(card.id);
+        updatedCardMap.set(card.id, { ...existing, ...card });
+      } else {
+        // New card to add on top
+        newCardsToAdd.push(card);
+      }
+    });
+
+    // Final merged list: new cards first, then updated existing
+    const mergedCards = [...newCardsToAdd, ...Array.from(updatedCardMap.values())];
 
     // Prepare updated fields
     const updatedData = {
-      firstName,
-      lastName,
-      email,
-      phone,
-      address,
-      gender,
+      ...(firstName !== undefined && { firstName }),
+      ...(lastName !== undefined && { lastName }),
+      ...(email !== undefined && { email }),
+      ...(phone !== undefined && { phone }),
+      ...(address !== undefined && { address }),
+      ...(gender !== undefined && { gender }),
       ...(profileImageUrl && { profileImageUrl }),
-      paymentCards: updatedCards,
+      ...(paymentCards !== undefined && { paymentCards: mergedCards }),
     };
 
+    // Update the user
     const updatedUser = await userModel
       .findByIdAndUpdate(userId, updatedData, { new: true })
       .select("-password");
@@ -104,7 +127,7 @@ const updateProfile = async (req, res) => {
       createdAt: moment(updatedUser.createdAt).format("YYYY-MM-DD hh:mm A"),
       updatedAt: moment(updatedUser.updatedAt).format("YYYY-MM-DD hh:mm A"),
       paymentCards: updatedUser.paymentCards.map((card) => ({
-        id:card._id,
+        id: card._id,
         cardHolderName: card.cardHolderName,
         cardNumber: card.cardNumber,
         cvv: card.cvv,
@@ -118,11 +141,10 @@ const updateProfile = async (req, res) => {
     });
   } catch (error) {
     console.error(error);
-    return res
-      .status(statusCode.internalServerError)
-      .json({ error: error.message });
+    return res.status(statusCode.internalServerError).json({ error: error.message });
   }
 };
+
 
 
 // DELETE Account
