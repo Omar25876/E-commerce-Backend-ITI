@@ -45,6 +45,7 @@ const getProfile = async (req, res) => {
 const updateProfile = async (req, res) => {
   try {
     const userId = req.user.id;
+
     const {
       firstName,
       lastName,
@@ -52,18 +53,30 @@ const updateProfile = async (req, res) => {
       phone,
       address,
       gender,
-      paymentCards,
+      paymentCards,  
     } = req.body;
 
+    // Upload image to GitHub if provided
     let profileImageUrl;
-
-    // 🔽 Handle image upload to GitHub
     if (req.file) {
       const folderPath = `profile_images/${userId}`;
       profileImageUrl = await uploadImageToGitHub(req.file, folderPath);
     }
 
-    // 🔽 Prepare update data
+    // Get the existing user
+    const user = await userModel.findById(userId);
+    if (!user) {
+      return res.status(statusCode.notFound).json({ message: "User not found." });
+    }
+
+    // Merge payment cards (new ones added to existing)
+    const parsedCards = Array.isArray(paymentCards)
+      ? paymentCards
+      : JSON.parse(paymentCards || "[]");
+
+    const updatedCards = [...user.paymentCards, ...parsedCards];
+
+    // Prepare updated fields
     const updatedData = {
       firstName,
       lastName,
@@ -72,14 +85,12 @@ const updateProfile = async (req, res) => {
       address,
       gender,
       ...(profileImageUrl && { profileImageUrl }),
-      ...(paymentCards && { paymentCards: JSON.parse(paymentCards) }),
+      paymentCards: updatedCards,
     };
 
-    const updatedUser = await userModel.findByIdAndUpdate(userId, updatedData, { new: true }).select("-password");
-
-    if (!updatedUser) {
-      return res.status(statusCode.notFound).json({ message: "User not found." });
-    }
+    const updatedUser = await userModel
+      .findByIdAndUpdate(userId, updatedData, { new: true })
+      .select("-password");
 
     const formattedProfile = {
       profileImageUrl: updatedUser.profileImageUrl,
@@ -92,9 +103,10 @@ const updateProfile = async (req, res) => {
       isAdmin: updatedUser.isAdmin,
       createdAt: moment(updatedUser.createdAt).format("YYYY-MM-DD hh:mm A"),
       updatedAt: moment(updatedUser.updatedAt).format("YYYY-MM-DD hh:mm A"),
-      paymentCards: updatedUser.paymentCards.map(card => ({
-        cardNumber: card.cardNumber,
+      paymentCards: updatedUser.paymentCards.map((card) => ({
+        id:card._id,
         cardHolderName: card.cardHolderName,
+        cardNumber: card.cardNumber,
         cvv: card.cvv,
         expiryDate: card.expiryDate,
       })),
@@ -106,9 +118,12 @@ const updateProfile = async (req, res) => {
     });
   } catch (error) {
     console.error(error);
-    return res.status(statusCode.internalServerError).json({ error: error.message });
+    return res
+      .status(statusCode.internalServerError)
+      .json({ error: error.message });
   }
 };
+
 
 // DELETE Account
 const deleteAccount = async (req, res) => {
