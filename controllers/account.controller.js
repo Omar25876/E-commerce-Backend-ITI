@@ -15,6 +15,7 @@ const getProfile = async (req, res) => {
     }
 
     const formattedProfile = {
+      id:user._id,
       profileImageUrl: user.profileImageUrl,
       firstName: user.firstName,
       lastName: user.lastName,
