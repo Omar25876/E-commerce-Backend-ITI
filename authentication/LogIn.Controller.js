@@ -2,11 +2,11 @@ const userModel = require("../models/userModel");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const statusCode = require("../constant/statusCode");
+const moment = require("moment");
 
 const LogIn = async (req, res) => {
   try {
     const { email, phone, password } = req.body;
-    console.log("Input:", email, phone, password); // ✅ log input
 
     if (!password || (!email && !phone)) {
       return res.status(statusCode.badRequest).json({
@@ -21,8 +21,6 @@ const LogIn = async (req, res) => {
       foundUser = await userModel.findOne({ phone });
     }
 
-    console.log("Found User:", foundUser); // ✅ log user
-
     if (!foundUser) {
       return res.status(statusCode.badRequest).json({
         message: "Invalid email/phone or password",
@@ -30,8 +28,7 @@ const LogIn = async (req, res) => {
     }
 
     const passTrue = await bcrypt.compare(password, foundUser.password);
-    console.log("Password Match:", passTrue); // ✅ log password check
-
+ 
     if (!passTrue) {
       return res.status(statusCode.badRequest).json({
         message: "Invalid email/phone or password",
@@ -44,14 +41,22 @@ const LogIn = async (req, res) => {
       { expiresIn: process.env.JWT_EXPIRATION }
     );
 
+
     return res.status(statusCode.ok).json({
       message: "Logged in successfully.",
       token: dataJWT,
       user: {
-        username: foundUser.username,
+        _id: foundUser._id,
+        profileImageUrl: foundUser.profileImageUrl,
+        firstName: foundUser.firstName,
+        lastName: foundUser.lastName,
         email: foundUser.email,
         address: foundUser.address,
         phone: foundUser.phone,
+        gender: foundUser.gender,
+        isAdmin: foundUser.isAdmin,
+        createdAt: moment(foundUser.createdAt).format("YYYY-MM-DD hh:mm A"), 
+        updatedAt: moment(foundUser.updatedAt).format("YYYY-MM-DD hh:mm A"),
       },
     });
   } catch (error) {
