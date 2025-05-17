@@ -1,6 +1,6 @@
 const express = require("express");
 const router = express.Router();
-const { getProfile, updateProfile, deleteAccount,deletePaymentCard } = require("../controllers/account.controller");
+const { getProfile, updateProfile, deleteAccount,deletePaymentCard, allUsers, getAccount } = require("../controllers/account.controller");
 const { authenticateToken } = require("../middlewares/authMiddleware");
 const multer = require("multer");
 
@@ -16,5 +16,8 @@ router.put("/", authenticateToken, upload.single("profileImage"), updateProfile)
 router.delete("/profile", authenticateToken, deleteAccount);
 
 router.delete("/payment-card/:cardId", authenticateToken, deletePaymentCard);
+
+router.get("/users", authenticateToken, allUsers);   
+router.get("/users/:id", authenticateToken,  getAccount); 
 
 module.exports = router;
