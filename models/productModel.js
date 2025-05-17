@@ -54,6 +54,7 @@ const productSchema = new mongoose.Schema({
   // }
     category:String,
   brand:String,
+  colors:[String]
 }, { timestamps: true });
 
 module.exports = mongoose.model('Product', productSchema);
