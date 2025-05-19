@@ -120,30 +120,30 @@ exports.updateOrder = async (req, res) => {
   const orderId = req.params.Id;
 
   try {
-    const {
-      items,
-      payment,
-      shippingAddress,
-      AfterSale,
-      PromoCode,
-      DeliveyType,
-      Status,
-    } = req.body;
+    // Build the update object dynamically
+    const updateData = {};
 
-    const totalAmount = calculateTotalAmount(items);
+    if ('items' in req.body) {
+      updateData.items = req.body.items;
+      // Calculate totalAmount only if items are provided
+      updateData.totalAmount = calculateTotalAmount(req.body.items);
+    }
+
+    if ('payment' in req.body) updateData.payment = req.body.payment;
+    if ('shippingAddress' in req.body) updateData.shippingAddress = req.body.shippingAddress;
+    if ('AfterSale' in req.body) updateData.AfterSale = req.body.AfterSale;
+    if ('PromoCode' in req.body) updateData.PromoCode = req.body.PromoCode;
+    if ('DeliveyType' in req.body) updateData.DeliveyType = req.body.DeliveyType;
+    if ('Status' in req.body) updateData.Status = req.body.Status;
+
+    // If no fields were sent, respond with bad request
+    if (Object.keys(updateData).length === 0) {
+      return res.status(400).json({ error: "No valid fields provided to update" });
+    }
 
     const updatedOrder = await Order.findByIdAndUpdate(
       orderId,
-      {
-        items,
-        totalAmount,
-        payment,
-        shippingAddress,
-        AfterSale,
-        PromoCode,
-        DeliveyType,
-        Status,
-      },
+      updateData,
       { new: true }
     );
 
