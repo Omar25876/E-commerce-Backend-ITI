@@ -2,8 +2,8 @@ const Product = require('../models/productModel');
 const StatusCode = require('../constant/statusCode');
 const { uploadImageToGitHub } = require('../github');
 const multer = require('multer');
-const upload = multer({ storage: multer.memoryStorage() }).single('image');
 
+const upload = multer({ storage: multer.memoryStorage() }).array('file'); 
 
 const calculateAverageRating = (reviews) => {
   const reviewsCount = reviews.length;
@@ -74,14 +74,123 @@ exports.getProductById = async (req, res) => {
     res.status(StatusCode.internalServerError).json({ error: err.message });
   }
 };
-
+ 
 // Create a new product
+// exports.createProduct = async (req, res) => {
+//   upload(req, res, async (err) => {
+//     if (err) {
+//       console.error('Upload error:', err);
+//       return res.status(StatusCode.badRequest).json({
+//         error: 'Error uploading file',
+//         details: err.message,
+//       });
+//     }
+
+//     try {
+//       const {
+//         name,
+//         description,
+//         price,
+//         oldPrice,
+//         discount,
+//         colors,
+//         selectedColor,
+//         stock,
+//         highlights,
+//         specs,
+//         modelNumber,
+//         modelName,
+//         whatsInTheBox,
+//         isPopular,
+//         isNewArrival,
+//         isDiscover,
+//         category,
+//         brand,
+//       } = req.body;
+
+//       // Parse arrays safely
+//       const parsedColors = JSON.parse(colors || '[]');
+//       const parsedHighlights = JSON.parse(highlights || '[]');
+//       const parsedSpecs = JSON.parse(specs || '{}');
+//       const parsedWhatsInTheBox = JSON.parse(whatsInTheBox || '[]');
+
+//       if (!name || !price || !category || !brand) {
+//         return res
+//           .status(StatusCode.badRequest)
+//           .json({ error: 'Missing required fields' });
+//       }
+
+//       // Validate file-color count match
+//       if (
+//         !req.files ||
+//         req.files.length === 0 ||
+//         parsedColors.length !== req.files.length
+//       ) {
+//         return res.status(StatusCode.badRequest).json({
+//           error: 'Colors and image files must match in count.',
+//         });
+//       }
+
+//       const folderPath = `products/${Date.now()}`;
+
+//       const uploadedUrls = await Promise.all(
+//         req.files.map((file, idx) =>
+//           uploadImageToGitHub(file, `${folderPath}/${idx + 1}`)
+//         )
+//       );
+
+//       // Pair each color with its image URL
+//       const imagesAndColors = {};
+//       parsedColors.forEach((color, idx) => {
+//         imagesAndColors[color] = uploadedUrls[idx];
+//       });
+
+//       const productData = {
+//         name,
+//         description,
+//         colors: parsedColors,
+//         price: Number(price),
+//         oldPrice: Number(oldPrice),
+//         discount: Number(discount),
+//         selectedColor,
+//         stock: Number(stock),
+//         highlights: parsedHighlights,
+//         specs: parsedSpecs,
+//         modelNumber,
+//         modelName,
+//         whatsInTheBox: parsedWhatsInTheBox,
+//         isPopular: isPopular === 'true',
+//         isNewArrival: isNewArrival === 'true',
+//         isDiscover: isDiscover === 'true',
+//         category,
+//         brand,
+//         imagesAndColors,
+//         rating: 0,
+//         reviewsCount: 0,
+//         reviews: [],
+//       };
+
+//       const product = await Product.create(productData);
+//       res.status(StatusCode.created).json(product);
+//     } catch (error) {
+//       console.error('Error creating product:', error);
+//       res.status(StatusCode.badRequest).json({ error: error.message });
+//     }
+//   });
+// };
+
+// Delay utility
+ 
+const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
+
 exports.createProduct = async (req, res) => {
   upload(req, res, async (err) => {
     if (err) {
-      return res
-        .status(StatusCode.badRequest)
-        .json({ error: 'Error uploading file' });
+      console.error('Upload error:', err);
+      return res.status(StatusCode.badRequest).json({
+        error: 'Error uploading file',
+        details: err.message,
+      });
     }
 
     try {
@@ -91,7 +200,7 @@ exports.createProduct = async (req, res) => {
         price,
         oldPrice,
         discount,
-        imagesAndColors,
+        colors,
         selectedColor,
         stock,
         highlights,
@@ -106,57 +215,96 @@ exports.createProduct = async (req, res) => {
         brand,
       } = req.body;
 
+      const parsedColors = JSON.parse(colors || '[]');
+      const parsedHighlights = JSON.parse(highlights || '[]');
+      const parsedSpecs = JSON.parse(specs || '{}');
+      const parsedWhatsInTheBox = JSON.parse(whatsInTheBox || '[]');
+
+      if (!name || !price || !category || !brand) {
+        return res
+          .status(StatusCode.badRequest)
+          .json({ error: 'Missing required fields' });
+      }
+
+      if (
+        !req.files ||
+        req.files.length === 0 ||
+        parsedColors.length !== req.files.length
+      ) {
+        return res.status(StatusCode.badRequest).json({
+          error: 'Colors and image files must match in count.',
+        });
+      }
+
+      const folderPath = `products/${Date.now()}`;
+      const uploadedUrls = [];
+
+      for (let i = 0; i < req.files.length; i++) {
+        const file = req.files[i];
+        console.log(`Uploading image ${i + 1}/${req.files.length}: ${file.originalname}`);
+
+        try {
+          const url = await uploadImageToGitHub(file, `${folderPath}/${i + 1}`);
+           await sleep(5000);
+          uploadedUrls.push(url);
+          console.log(`Uploaded: ${url}`);
+          if (i < req.files.length - 1) await sleep(3000);
+          if(uploadedUrls.length != req.files.length)
+            await sleep(1000);
+        } catch (uploadErr) {
+          console.error(`Upload failed for ${file.originalname}:`, uploadErr.message);
+          return res.status(500).json({ error: 'Image upload failed', details: uploadErr.message });
+        }
+      }
+
+      const imagesAndColors = {};
+      parsedColors.forEach((color, idx) => {
+        imagesAndColors[color] = uploadedUrls[idx];
+      });
+
       const productData = {
         name,
         description,
-        price,
-        oldPrice,
-        discount,
-        imagesAndColors,
+        colors: parsedColors,
+        price: Number(price),
+        oldPrice: Number(oldPrice),
+        discount: Number(discount),
         selectedColor,
-        stock,
-        highlights,
-        specs,
+        stock: Number(stock),
+        highlights: parsedHighlights,
+        specs: parsedSpecs,
         modelNumber,
         modelName,
-        whatsInTheBox,
-        isPopular,
-        isNewArrival,
-        isDiscover,
+        whatsInTheBox: parsedWhatsInTheBox,
+        isPopular: isPopular === 'true',
+        isNewArrival: isNewArrival === 'true',
+        isDiscover: isDiscover === 'true',
         category,
         brand,
+        imagesAndColors,
         rating: 0,
         reviewsCount: 0,
         reviews: [],
       };
 
-      if (req.file) {
-        const fileName = req.query.fileName || '1'; 
-        if (!['1', '2', '3', '4'].includes(fileName)) {
-          return res
-            .status(StatusCode.badRequest)
-            .json({ error: 'Invalid fileName parameter' });
-        }
-        const uploadedFileUrl = await uploadImageToGitHub(req.file, fileName);
-        productData.images = [uploadedFileUrl]; 
-      }
-
-      const product = new Product(productData);
-      await product.save();
+      const product = await Product.create(productData);
       res.status(StatusCode.created).json(product);
-    } catch (err) {
-      res.status(StatusCode.badRequest).json({ error: err.message });
+    } catch (error) {
+      console.error('Error creating product:', error);
+      res.status(StatusCode.badRequest).json({ error: error.message });
     }
   });
 };
+
+
+
+
 
 // Update an existing product
 exports.updateProduct = async (req, res) => {
   upload(req, res, async (err) => {
     if (err) {
-      return res
-        .status(StatusCode.badRequest)
-        .json({ error: 'Error uploading file' });
+      return res.status(StatusCode.badRequest).json({ error: 'Error uploading file' });
     }
 
     try {
@@ -180,6 +328,8 @@ exports.updateProduct = async (req, res) => {
         category,
         brand,
       } = req.body;
+
+      
 
       const updatedProductData = {
         name,
@@ -202,15 +352,11 @@ exports.updateProduct = async (req, res) => {
         brand,
       };
 
-      if (req.file) {
-        const fileName = req.query.fileName || '1'; // Default 1 for products
-        if (!['1', '2', '3', '4'].includes(fileName)) {
-          return res
-            .status(StatusCode.badRequest)
-            .json({ error: 'Invalid fileName parameter' });
-        }
-        const uploadedFileUrl = await uploadImageToGitHub(req.file, fileName);
-        updatedProductData.images = [uploadedFileUrl]; // Replace images
+      if (req.files && req.files.length > 0) {
+        const uploaded = await Promise.all(
+          req.files.map((file, idx) => uploadImageToGitHub(file, (idx + 1).toString()))
+        );
+        updatedProductData.images = uploaded; // replace images array
       }
 
       const updatedProduct = await Product.findByIdAndUpdate(
@@ -218,9 +364,10 @@ exports.updateProduct = async (req, res) => {
         updatedProductData,
         { new: true }
       );
+
       res.json(updatedProduct);
-    } catch (err) {
-      res.status(StatusCode.badRequest).json({ error: err.message });
+    } catch (error) {
+      res.status(StatusCode.badRequest).json({ error: error.message });
     }
   });
 };
@@ -231,9 +378,7 @@ exports.deleteProduct = async (req, res) => {
     await Product.findByIdAndDelete(req.params.id);
     res.json({ message: 'Product deleted' });
   } catch (err) {
-    res
-      .status(StatusCode.internalServerError)
-      .json({ error: err.message });
+    res.status(StatusCode.internalServerError).json({ error: err.message });
   }
 };
 

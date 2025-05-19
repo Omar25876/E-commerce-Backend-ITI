@@ -14,4 +14,5 @@ module.exports = {
   promocode:require("./promocode.routes"),
   forgotPassword:require("../authentication/ForgetPassword.Route"),
   resetPassword:require("../authentication/ResetPassword.Route"),
+  admin: require("../routes/admin.routes"),
 };

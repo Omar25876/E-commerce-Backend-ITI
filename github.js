@@ -1,6 +1,6 @@
 const axios = require('axios');
 require('dotenv').config();
-// GitHub API Configuration
+
 // GitHub API Configuration
 const GITHUB_TOKEN = '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';
 const GITHUB_REPO = 'Omar25876/E-commerce-Image-Storage-ITI';
@@ -14,28 +14,29 @@ const GITHUB_API_URL = `https://api.github.com/repos/${GITHUB_REPO}/contents`;
  */
 async function uploadImageToGitHub(file, folderPath) {
   try {
-    // Convert file to base64
     const fileContent = file.buffer.toString('base64');
 
-    // Get extension and build a unique filename
     const fileExtension = file.originalname.split('.').pop();
-    const timestamp = Date.now();
-    const uniqueFileName = `${file.originalname.split('.')[0]}_${timestamp}.${fileExtension}`;
+    const baseName = file.originalname.split('.')[0];
+    const uniqueFileName = `${baseName}_${Date.now()}_${Math.random().toString(36).substring(2)}.${fileExtension}`;
 
-    // Full GitHub path (e.g., products/InEar/JBL/Jr310/uniqueFile.png)
     const githubPath = `${folderPath}/${uniqueFileName}`;
     const url = `${GITHUB_API_URL}/${githubPath}`;
 
-    // Upload content
-    const response = await axios.put(url, {
-      message: `Upload ${file.originalname}`,
-      content: fileContent,
-    }, {
-      headers: {
-        Authorization: `token ${GITHUB_TOKEN}`,
-        'Content-Type': 'application/json',
+    const response = await axios.put(
+      url,
+      {
+        message: `Upload ${file.originalname}`,
+        content: fileContent,
+        branch: 'main',
       },
-    });
+      {
+        headers: {
+          Authorization: `token ${GITHUB_TOKEN}`,
+          'Content-Type': 'application/json',
+        },
+      }
+    );
 
     return response.data.content.download_url;
   } catch (error) {
