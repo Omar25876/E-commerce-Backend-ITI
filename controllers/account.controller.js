@@ -15,6 +15,7 @@ const getProfile = async (req, res) => {
     }
 
     const formattedProfile = {
+      id:user._id,
       profileImageUrl: user.profileImageUrl,
       firstName: user.firstName,
       lastName: user.lastName,
@@ -41,7 +42,6 @@ const getProfile = async (req, res) => {
   }
 };
 
-// UPDATE Profile Data
 // UPDATE Profile Data
 const updateProfile = async (req, res) => {
   try {
@@ -116,6 +116,7 @@ const updateProfile = async (req, res) => {
       .select("-password");
 
     const formattedProfile = {
+      id:updatedUser._id,
       profileImageUrl: updatedUser.profileImageUrl,
       firstName: updatedUser.firstName,
       lastName: updatedUser.lastName,
@@ -164,8 +165,133 @@ const deleteAccount = async (req, res) => {
   }
 };
 
+ 
+// const deletePaymentCard = async (req, res) => {
+//   try {
+//     const userId = req.user.id;
+//     const cardId = req.params.cardId;
+
+//     const user = await userModel.findById(userId);
+//     if (!user) {
+//       return res.status(statusCode.notFound).json({ message: "User not found." });
+//     }
+
+//     const initialLength = user.paymentCards.length;
+//     user.paymentCards = user.paymentCards.filter(
+//       (card) => String(card._id) !== String(cardId)
+//     );
+
+//     if (user.paymentCards.length === initialLength) {
+//       return res.status(statusCode.notFound).json({ message: "Card not found." });
+//     }
+
+//     await user.save();
+
+//     return res.status(statusCode.ok).json({ message: "Payment card deleted successfully." });
+//   } catch (error) {
+//     console.error(error);
+//     return res.status(statusCode.internalServerError).json({ error: error.message });
+//   }
+// };
+
+const deletePaymentCard = async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const cardId = req.params.cardId;
+
+    const user = await userModel.findById(userId);
+    if (!user) {
+      return res.status(statusCode.notFound).json({ message: "User not found." });
+    }
+
+    const initialLength = user.paymentCards.length;
+    user.paymentCards = user.paymentCards.filter(
+      (card) => String(card._id) !== String(cardId)
+    );
+
+    if (user.paymentCards.length === initialLength) {
+      return res.status(statusCode.notFound).json({ message: "Card not found." });
+    }
+
+    // Save without validating other fields
+    await user.save({ validateBeforeSave: false });
+
+    return res.status(statusCode.ok).json({ message: "Payment card deleted successfully." });
+  } catch (error) {
+    console.error(error);
+    return res.status(statusCode.internalServerError).json({ error: error.message });
+  }
+};
+
+
+/**
+ * GET /api/v1/users               (query: ?page=&size=)
+ * Returns paginated list of all users (password stripped out).
+ * Defaults → page 1, size 10.
+ */
+const allUsers = async (req, res) => {
+  try {
+    // pagination params with safe fall-backs
+    const page = Math.max(parseInt(req.query.page) || 1, 1);
+    const size = Math.max(parseInt(req.query.size) || 10, 1);
+    const skip = (page - 1) * size;
+
+    const [users, total] = await Promise.all([
+      userModel
+        .find()                       // all docs
+        .select("-password")          // never expose hashed pw
+        .skip(skip)
+        .limit(size),
+      userModel.countDocuments()
+    ]);
+
+    return res.status(statusCode.ok).json({
+      page,
+      size,
+      totalPages: Math.ceil(total / size),
+      totalUsers: total,
+      users,
+    });
+  } catch (err) {
+    console.error(err);
+    res
+      .status(statusCode.internalServerError)
+      .json({ error: err.message });
+  }
+};
+
+/**
+ * GET /api/v1/users/:id            (param :id = user id)
+ * Returns the complete account for a single user
+ */
+const getAccount = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const user = await userModel
+      .findById(id)
+      .select("-password");          // hide password
+
+    if (!user)
+      return res
+        .status(statusCode.notFound)
+        .json({ message: "User not found." });
+
+    return res.status(statusCode.ok).json({ user });
+  } catch (err) {
+    console.error(err);
+    res
+      .status(statusCode.internalServerError)
+      .json({ error: err.message });
+  }
+};
+
+
 module.exports = {
   getProfile,
   updateProfile,
   deleteAccount,
+  deletePaymentCard,
+  allUsers,
+  getAccount,
 };

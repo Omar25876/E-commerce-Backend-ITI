@@ -32,6 +32,7 @@ app.use("/api/cart", routers.cart);
 app.use('/api/promocode', routers.promocode);
 app.use('/api/resetPassword', routers.resetPassword);
 app.use('/api/forgetPassword', routers.forgotPassword);
+app.use('/api/users', routers.admin);
 
 app.use((err, req, res, next) => {
   return res
